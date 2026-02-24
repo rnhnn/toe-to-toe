@@ -1,10 +1,15 @@
 import Square from "./Square";
 
-export default function Board() {
+export default function Board({ squares, onSquareClick }) {
     return (
         <section className="board" aria-label="Game Board">
-            {Array.from({ length: 9 }).map((_, i) => (
-                <Square key={i} index={i} />
+            {squares.map((value, i) => (
+                <Square
+                    key={i}
+                    index={i}
+                    value={value}
+                    onClick={() => onSquareClick(i)}
+                />
             ))}
         </section>
     );

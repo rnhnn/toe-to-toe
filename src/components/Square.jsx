@@ -1,7 +1,7 @@
-export default function Square({ index }) {
-    return (
-        <button className="square" type="button">
-            {index}
-        </button>
-    );
+export default function Square({ index, value, onClick }) {
+  return (
+    <button className="square" type="button" onClick={onClick}>
+      {value ?? index}
+    </button>
+  );
 }
