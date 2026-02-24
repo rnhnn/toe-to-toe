@@ -1,0 +1,16 @@
+{
+  "john": [
+    { "id": "strawberry-fields-forever", "title": "Strawberry Fields Forever" },
+    { "id": "help", "title": "Help!" },
+    { "id": "come-together", "title": "Come Together" },
+    { "id": "i-am-the-walrus", "title": "I Am the Walrus" },
+    { "id": "across-the-universe", "title": "Across the Universe" }
+  ],
+  "paul": [
+    { "id": "penny-lane", "title": "Penny Lane" },
+    { "id": "yesterday", "title": "Yesterday" },
+    { "id": "let-it-be", "title": "Let It Be" },
+    { "id": "hey-jude", "title": "Hey Jude" },
+    { "id": "blackbird", "title": "Blackbird" }
+  ]
+}

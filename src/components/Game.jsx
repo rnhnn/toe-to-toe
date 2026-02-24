@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Board from "./Board";
+import songs from "../data/songs.json";
 
 function calculateWinner(squares) {
   const lines = [
@@ -15,8 +16,8 @@ function calculateWinner(squares) {
 
   for (const [a, b, c] of lines) {
     const first = squares[a];
-    if (first && first === squares[b] && first === squares[c]) {
-      return first; // "john" or "paul"
+    if (first && first.player === squares[b]?.player && first.player === squares[c]?.player) {
+      return first.player;
     }
   }
 
@@ -26,6 +27,8 @@ function calculateWinner(squares) {
 export default function Game() {
   const [squares, setSquares] = useState(Array(9).fill(null));
   const [turn, setTurn] = useState("john");
+  const [johnSongIndex, setJohnSongIndex] = useState(0);
+  const [paulSongIndex, setPaulSongIndex] = useState(0);
 
   const winner = calculateWinner(squares);
 
@@ -34,7 +37,17 @@ export default function Game() {
     if (squares[index] !== null) return;
 
     const nextSquares = [...squares];
-    nextSquares[index] = turn;
+      if (turn === "john") {
+        const song = songs.john[johnSongIndex];
+        nextSquares[index] = { player: "john", song };
+
+        setJohnSongIndex((n) => n + 1);
+      } else {
+        const song = songs.paul[paulSongIndex];
+        nextSquares[index] = { player: "paul", song };
+
+        setPaulSongIndex((n) => n + 1);
+      }
 
     setSquares(nextSquares);
     setTurn(turn === "john" ? "paul" : "john");
@@ -43,6 +56,9 @@ export default function Game() {
   function handleReset() {
     setSquares(Array(9).fill(null));
     setTurn("john");
+
+    setJohnSongIndex(0);
+    setPaulSongIndex(0);
   }
 
   const prettyTurn = turn === "john" ? "John" : "Paul";
