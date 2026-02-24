@@ -1,3 +1,4 @@
+import Game from "./components/Game";
 import "./App.css";
 
 export default function App() {
@@ -5,6 +6,7 @@ export default function App() {
     <main className="app">
       <h1>Toe to Toe</h1>
       <p>Beatles-flavored Tic-Tac-Toe (coming soon)</p>
+      <Game />
     </main>
   );
 }
