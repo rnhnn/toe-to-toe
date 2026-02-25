@@ -246,7 +246,7 @@ button {
 }
 
 .modal {
-  margin-bottom: 50px;
+  margin-bottom: 92px;
   color: #f4f1ea;
   border-radius: 12px;
   transform: scale(var(--game-scale));
@@ -288,8 +288,8 @@ button {
 
 .starter-button img {
   display: block;
-  height: 250px;
-  width: 250px;
+  height: 200px;
+  width: 200px;
   border-radius: 12px;
   object-fit: cover;
   filter: grayscale(100%);
