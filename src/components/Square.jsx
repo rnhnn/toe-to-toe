@@ -1,9 +1,10 @@
-export default function Square({ index, value, onClick }) {
+export default function Square({ index, value, onClick, isWinning }) {
   const playerClass = value ? `square--${value.player}` : "";
+  const winClass = isWinning ? "square--win" : "";
 
   return (
     <button
-      className={`square ${playerClass}`}
+      className={`square ${playerClass} ${winClass}`}
       type="button"
       onClick={onClick}
     >
