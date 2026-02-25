@@ -8,7 +8,7 @@ export function useSmoothActiveFloat(ref, active) {
     const el = ref.current;
     if (!el) return;
 
-    const shadow = el.querySelector(".side-shadow");
+    const shadow = el.querySelector(".instrument-shadow");
     const isActiveNow = !!active;
     const wasActive = wasActiveRef.current;
 

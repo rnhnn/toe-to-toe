@@ -8,11 +8,11 @@ const Instrument = forwardRef(function Instrument(
   return (
     <div
       ref={ref}
-      className={`side-image ${side} ${isActive ? "is-active" : ""} ${
+      className={`instrument ${side} ${isActive ? "is-active" : ""} ${
         isWinner ? "is-winner" : ""
       } ${isTie ? "is-tie" : ""}`}
     >
-      <span className="side-shadow" aria-hidden="true" />
+      <span className="instrument-shadow" aria-hidden="true" />
       <img src={imgSrc} alt={alt} />
     </div>
   );

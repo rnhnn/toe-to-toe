@@ -146,7 +146,7 @@ export default function Game() {
       el.classList.remove("is-active");
       el.style.transition = "";
       el.style.transform = "";
-      const shadow = el.querySelector(".side-shadow");
+      const shadow = el.querySelector(".instrument-shadow");
       if (shadow) {
         shadow.style.transition = "";
         shadow.style.transform = "";
