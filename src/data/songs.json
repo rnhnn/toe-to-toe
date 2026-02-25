@@ -2,15 +2,21 @@
   "john": [
     { "id": "strawberry-fields-forever", "title": "Strawberry Fields Forever" },
     { "id": "help", "title": "Help!" },
-    { "id": "come-together", "title": "Come Together" },
-    { "id": "i-am-the-walrus", "title": "I Am the Walrus" },
-    { "id": "across-the-universe", "title": "Across the Universe" }
+    { "id": "revolution", "title": "Revolution" },
+    { "id": "day-tripper", "title": "Day Tripper" },
+    { "id": "rain", "title": "Rain" },
+    { "id": "dont-let-me-down", "title": "Don't Let Me Down" },
+    { "id": "hey-bulldog", "title": "Hey Bulldog" },
+    { "id": "i-want-you-shes-so-heavy", "title": "I Want You (She’s So Heavy)" }
   ],
   "paul": [
     { "id": "penny-lane", "title": "Penny Lane" },
     { "id": "yesterday", "title": "Yesterday" },
-    { "id": "let-it-be", "title": "Let It Be" },
     { "id": "hey-jude", "title": "Hey Jude" },
-    { "id": "blackbird", "title": "Blackbird" }
+    { "id": "we-can-work-it-out", "title": "We Can Work It Out" },
+    { "id": "paperback-writer", "title": "Paperback Writer" },
+    { "id": "get-back", "title": "Get Back" },
+    { "id": "lady-madonna", "title": "Lady Madonna" },
+    { "id": "you-never-give-me-your-money", "title": "You Never Give Me Your Money" }
   ]
 }
