@@ -379,13 +379,25 @@ export default function Game() {
       {starter === null && (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal">
-            <h2 className="modal-title">Who goes first?</h2>
-            <div className="modal-actions">
-              <button type="button" onClick={() => handleChooseStarter("john")}>
-                Lennon
+            <h2 className="modal-title">Select Player:</h2>
+
+            <div className="modal-actions modal-actions--portraits">
+              <button
+                type="button"
+                className="starter-button starter-button--john"
+                onClick={() => handleChooseStarter("john")}
+                aria-label="Start with John Lennon"
+              >
+                <img src="/images/john.png" alt="John Lennon portrait" />
               </button>
-              <button type="button" onClick={() => handleChooseStarter("paul")}>
-                McCartney
+
+              <button
+                type="button"
+                className="starter-button starter-button--paul"
+                onClick={() => handleChooseStarter("paul")}
+                aria-label="Start with Paul McCartney"
+              >
+                <img src="/images/paul.png" alt="Paul McCartney portrait" />
               </button>
             </div>
           </div>
