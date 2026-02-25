@@ -9,10 +9,14 @@ import { chooseCpuMove } from "../engine/cpu";
 import { useSmoothActiveFloat } from "../hooks/useSmoothActiveFloat";
 import { useCrossfadeAudio } from "../hooks/useCrossfadeAudio";
 
+import useGameScale from "../hooks/useGameScale";
+
 import SelectOverlay from "./SelectOverlay";
 import Instrument from "./Instrument";
 
 export default function Game() {
+  useGameScale(1200, 720);
+
   const [squares, setSquares] = useState(() => Array(TOTAL).fill(null));
   const [humanPlayer, setHumanPlayer] = useState(null);
   const [turn, setTurn] = useState(null);
@@ -155,35 +159,37 @@ export default function Game() {
     <>
       <SelectOverlay isOpen={starter === null} onSelect={handleSelectStarter} />
 
-      <section className="game-layout">
-        <Instrument
-          ref={paulRef}
-          side="left"
-          imgSrc="/images/hofner.png"
-          alt="Paul McCartney Hofner Bass"
-          isActive={isPaulTurn}
-          isWinner={winner === "paul"}
-          isTie={isTie}
-        />
+      <div className="game-stage">
+        <section className="game-layout">
+          <Instrument
+            ref={paulRef}
+            side="left"
+            imgSrc="/images/hofner.png"
+            alt="Paul McCartney Hofner Bass"
+            isActive={isPaulTurn}
+            isWinner={winner === "paul"}
+            isTie={isTie}
+          />
 
-        <div className="board-area">
-          <Board squares={squares} onSquareClick={handleSquareClick} winningLine={winningLine} winner={winner} />
+          <div className="board-area">
+            <Board squares={squares} onSquareClick={handleSquareClick} winningLine={winningLine} winner={winner} />
 
-          <button className="board-reset" type="button" onClick={handleReset}>
-            Reset
-          </button>
-        </div>
+            <button className="board-reset" type="button" onClick={handleReset}>
+              Reset
+            </button>
+          </div>
 
-        <Instrument
-          ref={johnRef}
-          side="right"
-          imgSrc="/images/casino.png"
-          alt="John Lennon Casino Guitar"
-          isActive={isJohnTurn}
-          isWinner={winner === "john"}
-          isTie={isTie}
-        />
-      </section>
+          <Instrument
+            ref={johnRef}
+            side="right"
+            imgSrc="/images/casino.png"
+            alt="John Lennon Casino Guitar"
+            isActive={isJohnTurn}
+            isWinner={winner === "john"}
+            isTie={isTie}
+          />
+        </section>
+      </div>
     </>
   );
 }

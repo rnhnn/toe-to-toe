@@ -1,9 +1,20 @@
+:root {
+  --game-scale: 1;
+  --game-base-width: 1200px;
+  --game-base-height: 720px;
+}
+
+html {
+  height: 100%;
+}
+
 body {
   margin: 0px;
   font-family: "Playfair Display", serif;
   text-align: center;
   color: #453629;
   background: #f4f1ea;
+  min-height: 100%;
 }
 
 body::after {
@@ -27,16 +38,23 @@ button {
   all: unset;
 }
 
-.game,
-.modal-overlay {
+.game {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.game {
   height: 100vh;
   width: 100vw;
+}
+
+.game-stage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: var(--game-base-width);
+  height: var(--game-base-height);
+  transform: translate(-50%, -50%) scale(var(--game-scale));
+  transform-origin: center;
 }
 
 .game-layout {
@@ -44,6 +62,8 @@ button {
   align-items: center;
   justify-content: center;
   gap: 48px;
+  width: 100%;
+  height: 100%;
 }
 
 .board-area {
@@ -178,7 +198,7 @@ button {
 }
 
 .square {
-  height: 120px;
+  height: 110px;
   padding-top: 12px;
   padding-right: 12px;
   padding-bottom: 12px;
@@ -209,7 +229,10 @@ button {
   right: 0px;
   bottom: 0px;
   left: 0px;
-  z-index: 10;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 1;
   visibility: visible;
   background: rgba(0, 0, 0, 0.783);
@@ -226,6 +249,8 @@ button {
   margin-bottom: 50px;
   color: #f4f1ea;
   border-radius: 12px;
+  transform: scale(var(--game-scale));
+  transform-origin: center;
 }
 
 .modal-title {
