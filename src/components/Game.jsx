@@ -1,63 +1,32 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Board from "./Board";
 import songs from "../data/songs.json";
 
-/**
- * Returns:
- * - null if no winner
- * - { player: "john"|"paul", line: number[] } if winner, where line is 4 indices
- */
+const SIZE = 4;
+const TOTAL = SIZE * SIZE;
+
+const LINES_4X4 = (() => {
+  const lines = [];
+  for (let r = 0; r < SIZE; r++) lines.push([r * 4 + 0, r * 4 + 1, r * 4 + 2, r * 4 + 3]);
+  for (let c = 0; c < SIZE; c++) lines.push([0 * 4 + c, 1 * 4 + c, 2 * 4 + c, 3 * 4 + c]);
+  lines.push([0, 5, 10, 15], [3, 6, 9, 12]);
+  return lines;
+})();
+
+const CENTER = new Set([5, 6, 9, 10]);
+const CORNERS = new Set([0, 3, 12, 15]);
+
+const TARGET_VOL = 1.0;
+const XFADE_SEC = 0.45;
+
+const CPU_THINK_MIN_MS = 500;
+const CPU_THINK_MAX_MS = 1100;
+
 function calculateWinnerInfo(squares) {
-  const size = 4;
-  const at = (r, c) => squares[r * size + c];
-
-  // rows
-  for (let r = 0; r < size; r++) {
-    const first = at(r, 0);
-    if (
-      first &&
-      at(r, 1)?.player === first.player &&
-      at(r, 2)?.player === first.player &&
-      at(r, 3)?.player === first.player
-    ) {
-      return { player: first.player, line: [r * 4 + 0, r * 4 + 1, r * 4 + 2, r * 4 + 3] };
-    }
+  for (const line of LINES_4X4) {
+    const a = squares[line[0]];
+    if (a && line.every((i) => squares[i]?.player === a.player)) return { player: a.player, line };
   }
-
-  // cols
-  for (let c = 0; c < size; c++) {
-    const first = at(0, c);
-    if (
-      first &&
-      at(1, c)?.player === first.player &&
-      at(2, c)?.player === first.player &&
-      at(3, c)?.player === first.player
-    ) {
-      return { player: first.player, line: [0 * 4 + c, 1 * 4 + c, 2 * 4 + c, 3 * 4 + c] };
-    }
-  }
-
-  // diagonals
-  const d1 = at(0, 0);
-  if (
-    d1 &&
-    at(1, 1)?.player === d1.player &&
-    at(2, 2)?.player === d1.player &&
-    at(3, 3)?.player === d1.player
-  ) {
-    return { player: d1.player, line: [0, 5, 10, 15] };
-  }
-
-  const d2 = at(0, 3);
-  if (
-    d2 &&
-    at(1, 2)?.player === d2.player &&
-    at(2, 1)?.player === d2.player &&
-    at(3, 0)?.player === d2.player
-  ) {
-    return { player: d2.player, line: [3, 6, 9, 12] };
-  }
-
   return null;
 }
 
@@ -75,42 +44,24 @@ function useSmoothActiveFloat(ref, active) {
     if (isActiveNow) {
       el.style.transition = "";
       el.style.transform = "";
-
       if (shadow) {
         shadow.style.transition = "";
         shadow.style.transform = "";
         shadow.style.opacity = "";
       }
-
       el.classList.add("is-active");
       wasActiveRef.current = true;
       return;
     }
 
-    if (!isActiveNow && wasActive) {
+    if (wasActive) {
       const wrapperFrom = getComputedStyle(el).transform;
+      const shadowCS = shadow ? getComputedStyle(shadow) : null;
 
-      let shadowFromTransform = null;
-      let shadowFromOpacity = null;
-      if (shadow) {
-        const cs = getComputedStyle(shadow);
-        shadowFromTransform = cs.transform;
-        shadowFromOpacity = cs.opacity;
-      }
-
-      if (wrapperFrom && wrapperFrom !== "none") {
-        el.style.transform = wrapperFrom;
-      } else {
-        el.style.transform = "translateY(0)";
-      }
-
-      if (shadow) {
-        if (shadowFromTransform && shadowFromTransform !== "none") {
-          shadow.style.transform = shadowFromTransform;
-        }
-        if (shadowFromOpacity) {
-          shadow.style.opacity = shadowFromOpacity;
-        }
+      el.style.transform = wrapperFrom && wrapperFrom !== "none" ? wrapperFrom : "translateY(0)";
+      if (shadow && shadowCS) {
+        if (shadowCS.transform && shadowCS.transform !== "none") shadow.style.transform = shadowCS.transform;
+        if (shadowCS.opacity) shadow.style.opacity = shadowCS.opacity;
       }
 
       el.classList.remove("is-active");
@@ -126,85 +77,59 @@ function useSmoothActiveFloat(ref, active) {
           shadow.style.opacity = "1";
         }
 
-        const cleanup = () => {
+        window.setTimeout(() => {
           el.style.transition = "";
           el.style.transform = "";
-
           if (shadow) {
             shadow.style.transition = "";
             shadow.style.transform = "";
             shadow.style.opacity = "";
           }
-        };
-
-        window.setTimeout(cleanup, 280);
+        }, 280);
       });
-
-      wasActiveRef.current = false;
     } else {
       el.classList.remove("is-active");
-      wasActiveRef.current = false;
     }
+
+    wasActiveRef.current = false;
   }, [active, ref]);
 }
-
-// ---------------- CPU helpers ----------------
-
-function buildLines4x4() {
-  const lines = [];
-  for (let r = 0; r < 4; r++) lines.push([r * 4 + 0, r * 4 + 1, r * 4 + 2, r * 4 + 3]);
-  for (let c = 0; c < 4; c++) lines.push([0 * 4 + c, 1 * 4 + c, 2 * 4 + c, 3 * 4 + c]);
-  lines.push([0, 5, 10, 15]);
-  lines.push([3, 6, 9, 12]);
-  return lines;
-}
-
-const LINES_4X4 = buildLines4x4();
 
 function findWinningMove(squares, player) {
   for (const line of LINES_4X4) {
     let count = 0;
-    let emptyIdx = null;
+    let empty = null;
+
     for (const i of line) {
       const cell = squares[i];
-      if (!cell) emptyIdx = i;
+      if (!cell) empty = i;
       else if (cell.player === player) count++;
     }
-    if (count === 3 && emptyIdx !== null) return emptyIdx;
+
+    if (count === 3 && empty !== null) return empty;
   }
   return null;
 }
 
-function wouldGiveOpponentImmediateWin(nextSquares, opponent) {
-  return findWinningMove(nextSquares, opponent) !== null;
-}
-
 function scoreMove(squares, idx, cpuPlayer, humanPlayer) {
-  const center = new Set([5, 6, 9, 10]);
-  const corners = new Set([0, 3, 12, 15]);
-
-  let score = 0;
-
-  if (center.has(idx)) score += 15;
-  else if (corners.has(idx)) score += 10;
-  else score += 6;
+  let score = CENTER.has(idx) ? 15 : CORNERS.has(idx) ? 10 : 6;
 
   for (const line of LINES_4X4) {
     if (!line.includes(idx)) continue;
 
-    let cpuCount = 0;
-    let humanCount = 0;
+    let cpu = 0;
+    let human = 0;
 
     for (const i of line) {
       const cell = i === idx ? { player: cpuPlayer } : squares[i];
       if (!cell) continue;
-      if (cell.player === cpuPlayer) cpuCount++;
-      if (cell.player === humanPlayer) humanCount++;
+      if (cell.player === cpuPlayer) cpu++;
+      else if (cell.player === humanPlayer) human++;
     }
 
-    if (humanCount === 0) {
-      if (cpuCount === 2) score += 8;
-      if (cpuCount === 3) score += 30;
+    if (human === 0) {
+      if (cpu === 2) score += 8;
+      if (cpu === 3) score += 30;
     }
   }
 
@@ -225,81 +150,33 @@ function chooseCpuMove(squares, cpuPlayer, humanPlayer) {
   const candidates = empties.map((idx) => {
     const next = [...squares];
     next[idx] = { player: cpuPlayer, song: null };
-    const blunder = wouldGiveOpponentImmediateWin(next, humanPlayer);
-    const baseScore = scoreMove(squares, idx, cpuPlayer, humanPlayer);
-    return { idx, score: baseScore + (blunder ? -50 : 0), blunder };
+    const blunder = findWinningMove(next, humanPlayer) !== null;
+    return { idx, score: scoreMove(squares, idx, cpuPlayer, humanPlayer) + (blunder ? -50 : 0), blunder };
   });
 
-  const hasSafe = candidates.some((c) => !c.blunder);
-  const usable = hasSafe ? candidates.filter((c) => !c.blunder) : candidates;
-
+  const usable = candidates.some((c) => !c.blunder) ? candidates.filter((c) => !c.blunder) : candidates;
   usable.sort((a, b) => b.score - a.score);
 
   const roll = Math.random();
   if (roll < 0.7) return usable[0].idx;
 
   if (roll < 0.95) {
-    const topN = usable.slice(0, Math.min(3, usable.length));
-    return topN[Math.floor(Math.random() * topN.length)].idx;
+    const top = usable.slice(0, Math.min(3, usable.length));
+    return top[Math.floor(Math.random() * top.length)].idx;
   }
 
   return usable[Math.floor(Math.random() * usable.length)].idx;
 }
 
-export default function Game() {
-  const [squares, setSquares] = useState(Array(16).fill(null));
-  const [starter, setStarter] = useState(null);
-  const [turn, setTurn] = useState(null);
-
-  const [humanPlayer, setHumanPlayer] = useState(null);
-  const cpuPlayer = humanPlayer ? (humanPlayer === "john" ? "paul" : "john") : null;
-
-  const [johnSongIndex, setJohnSongIndex] = useState(0);
-  const [paulSongIndex, setPaulSongIndex] = useState(0);
-
-  const winnerInfo = calculateWinnerInfo(squares);
-  const winner = winnerInfo?.player ?? null;
-
-  const isBoardFull = squares.every((s) => s !== null);
-  const isTie = !winner && isBoardFull;
-
-  const winningLine = winner
-    ? winnerInfo.line
-    : isTie
-    ? squares.map((_, i) => i)
-    : null;
-
-  const isJohnTurn = turn === "john" && !winner;
-  const isPaulTurn = turn === "paul" && !winner;
-
-  const johnRef = useRef(null);
-  const paulRef = useRef(null);
-
-  useSmoothActiveFloat(johnRef, isJohnTurn);
-  useSmoothActiveFloat(paulRef, isPaulTurn);
-
-  // -------- AUDIO: crossfade ONLY when previous is still playing ----------
+function useCrossfadeAudio() {
   const audioCacheRef = useRef(new Map());
   const audioCtxRef = useRef(null);
   const masterGainRef = useRef(null);
+  const currentRef = useRef({ el: null, source: null, gain: null });
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const currentPlaybackRef = useRef({ el: null, source: null, gain: null });
-  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-
-  // CPU cancellation token (reset/new selection/etc.)
-  const cpuTokenRef = useRef(0);
-
-  // -------- Tunables (place CPU delay HERE, next to your existing tunables) --------
-  const TARGET_VOL = 1.0;
-  const XFADE_SEC = 0.45;
-
-  // CPU "thinking" delay
-  const CPU_THINK_MIN_MS = 500;
-  const CPU_THINK_MAX_MS = 1100;
-
-  function getAudioContext() {
+  const getCtx = () => {
     if (audioCtxRef.current) return audioCtxRef.current;
-
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return null;
 
@@ -311,9 +188,9 @@ export default function Game() {
     audioCtxRef.current = ctx;
     masterGainRef.current = master;
     return ctx;
-  }
+  };
 
-  function getBaseAudioForId(id) {
+  const getBaseEl = (id) => {
     const cache = audioCacheRef.current;
     if (!cache.has(id)) {
       const base = new Audio(`/audios/${id}.mp3`);
@@ -322,109 +199,62 @@ export default function Game() {
       cache.set(id, base);
     }
     return cache.get(id);
-  }
+  };
 
-  function cleanupPlayback(pb) {
-    if (!pb) return;
+  const cleanup = (pb) => {
     try {
-      pb.source?.disconnect();
+      pb?.source?.disconnect();
     } catch {}
     try {
-      pb.gain?.disconnect();
+      pb?.gain?.disconnect();
     } catch {}
-  }
+  };
 
-  function stopPlayback(pb) {
-    if (!pb) return;
+  const stop = (pb) => {
+    if (!pb?.el) return;
     try {
-      if (pb.el) {
-        pb.el.pause();
-        pb.el.currentTime = 0;
-      }
+      pb.el.pause();
+      pb.el.currentTime = 0;
     } catch {}
-    cleanupPlayback(pb);
-  }
+    cleanup(pb);
+  };
 
-  function isPlaybackActive(pb) {
-    if (!pb?.el) return false;
-    return !pb.el.paused && !pb.el.ended;
-  }
+  const stopAll = () => {
+    stop(currentRef.current);
+    currentRef.current = { el: null, source: null, gain: null };
+    setIsPlaying(false);
+  };
 
-  function waitForAudioToFinish(tokenAtStart) {
-    return new Promise((resolve) => {
-      const cur = currentPlaybackRef.current?.el;
-      if (!cur || cur.paused || cur.ended) {
-        resolve();
-        return;
-      }
-
-      const onEnd = () => resolve();
-      cur.addEventListener("ended", onEnd, { once: true });
-
-      const check = () => {
-        if (cpuTokenRef.current !== tokenAtStart) {
-          cur.removeEventListener("ended", onEnd);
-          resolve();
-          return;
-        }
-        requestAnimationFrame(check);
-      };
-      requestAnimationFrame(check);
-    });
-  }
-
-  function waitMs(ms, tokenAtStart) {
-    return new Promise((resolve) => {
-      const t = window.setTimeout(resolve, ms);
-
-      const check = () => {
-        if (cpuTokenRef.current !== tokenAtStart) {
-          window.clearTimeout(t);
-          resolve();
-          return;
-        }
-        requestAnimationFrame(check);
-      };
-      requestAnimationFrame(check);
-    });
-  }
-
-  function playSongSnippetByIdCrossfade(id) {
+  const play = (id) => {
     if (!id) return;
 
-    const ctx = getAudioContext();
+    const ctx = getCtx();
     const master = masterGainRef.current;
 
     if (!ctx || !master) {
-      const base = getBaseAudioForId(id);
-      const el = base.cloneNode(true);
+      const el = getBaseEl(id).cloneNode(true);
       el.volume = TARGET_VOL;
       el.currentTime = 0;
 
-      setIsAudioPlaying(true);
-      el.play().catch(() => setIsAudioPlaying(false));
-
-      el.addEventListener("ended", () => setIsAudioPlaying(false), { once: true });
+      setIsPlaying(true);
+      el.play().catch(() => setIsPlaying(false));
+      el.addEventListener("ended", () => setIsPlaying(false), { once: true });
       return;
     }
 
-    if (ctx.state === "suspended") {
-      ctx.resume().catch(() => {});
-    }
+    if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
-    const prev = currentPlaybackRef.current;
-    const hasPrevPlaying = isPlaybackActive(prev);
+    const prev = currentRef.current;
+    const hasPrev = prev?.el && !prev.el.paused && !prev.el.ended;
 
-    const base = getBaseAudioForId(id);
-    const el = base.cloneNode(true);
+    const el = getBaseEl(id).cloneNode(true);
     el.currentTime = 0;
 
     const source = ctx.createMediaElementSource(el);
     const gain = ctx.createGain();
-
     const now = ctx.currentTime;
 
-    if (hasPrevPlaying) {
+    if (hasPrev) {
       gain.gain.setValueAtTime(0, now);
       gain.gain.linearRampToValueAtTime(TARGET_VOL, now + XFADE_SEC);
 
@@ -434,7 +264,7 @@ export default function Game() {
         prev.gain.gain.linearRampToValueAtTime(0, now + XFADE_SEC);
       }
 
-      window.setTimeout(() => stopPlayback(prev), Math.ceil(XFADE_SEC * 1000) + 30);
+      window.setTimeout(() => stop(prev), Math.ceil(XFADE_SEC * 1000) + 30);
     } else {
       gain.gain.setValueAtTime(TARGET_VOL, now);
     }
@@ -442,152 +272,159 @@ export default function Game() {
     source.connect(gain);
     gain.connect(master);
 
-    currentPlaybackRef.current = { el, source, gain };
-    setIsAudioPlaying(true);
+    currentRef.current = { el, source, gain };
+    setIsPlaying(true);
 
     el.play().catch(() => {
-      stopPlayback({ el, source, gain });
-      const curPb = currentPlaybackRef.current;
-      if (curPb.el === el) currentPlaybackRef.current = { el: null, source: null, gain: null };
-      setIsAudioPlaying(false);
+      stop({ el, source, gain });
+      if (currentRef.current.el === el) currentRef.current = { el: null, source: null, gain: null };
+      setIsPlaying(false);
     });
 
     el.addEventListener(
       "ended",
       () => {
-        cleanupPlayback({ el, source, gain });
-        const curPb = currentPlaybackRef.current;
-        if (curPb.el === el) currentPlaybackRef.current = { el: null, source: null, gain: null };
-        setIsAudioPlaying(false);
+        cleanup({ el, source, gain });
+        if (currentRef.current.el === el) currentRef.current = { el: null, source: null, gain: null };
+        setIsPlaying(false);
       },
       { once: true }
     );
-  }
+  };
 
-  function handleChooseStarter(player) {
+  return { play, stopAll, isPlaying, currentElRef: currentRef };
+}
+
+export default function Game() {
+  const [squares, setSquares] = useState(() => Array(TOTAL).fill(null));
+  const [humanPlayer, setHumanPlayer] = useState(null);
+  const [turn, setTurn] = useState(null);
+  const [starter, setStarter] = useState(null);
+  const [songIndex, setSongIndex] = useState({ john: 0, paul: 0 });
+
+  const cpuPlayer = humanPlayer ? (humanPlayer === "john" ? "paul" : "john") : null;
+
+  const winnerInfo = useMemo(() => calculateWinnerInfo(squares), [squares]);
+  const winner = winnerInfo?.player ?? null;
+
+  const isBoardFull = useMemo(() => squares.every(Boolean), [squares]);
+  const isTie = !winner && isBoardFull;
+
+  const winningLine = winner ? winnerInfo.line : isTie ? squares.map((_, i) => i) : null;
+
+  const isJohnTurn = turn === "john" && !winner;
+  const isPaulTurn = turn === "paul" && !winner;
+
+  const johnRef = useRef(null);
+  const paulRef = useRef(null);
+
+  useSmoothActiveFloat(johnRef, isJohnTurn);
+  useSmoothActiveFloat(paulRef, isPaulTurn);
+
+  const cpuTokenRef = useRef(0);
+  const { play, stopAll, isPlaying, currentElRef } = useCrossfadeAudio();
+
+  const placeMove = (player, index, nextSquaresOverride) => {
+    const list = songs?.[player] ?? [];
+    const i = songIndex[player] ?? 0;
+    const song = list[i] ?? null;
+
+    const nextSquares = nextSquaresOverride ? [...nextSquaresOverride] : [...squares];
+    nextSquares[index] = { player, song };
+
+    setSquares(nextSquares);
+    setSongIndex((s) => ({ ...s, [player]: (s[player] ?? 0) + 1 }));
+    play(song?.id);
+
+    setTurn(player === "john" ? "paul" : "john");
+  };
+
+  const handleChooseStarter = (player) => {
     setStarter(player);
     setTurn(player);
     setHumanPlayer(player);
-
-    // cancel any pending CPU work from previous round
     cpuTokenRef.current++;
-  }
+  };
 
-  function handleSquareClick(index) {
-    if (!turn) return;
-    if (winner) return;
-    if (squares[index] !== null) return;
-
-    // human cannot play on CPU turn
+  const handleSquareClick = (index) => {
+    if (!turn || winner || squares[index]) return;
     if (cpuPlayer && turn === cpuPlayer) return;
+    placeMove(turn, index);
+  };
 
-    const nextSquares = [...squares];
-
-    if (turn === "john") {
-      const song = songs?.john?.[johnSongIndex] ?? null;
-      nextSquares[index] = { player: "john", song };
-      setJohnSongIndex((n) => n + 1);
-      playSongSnippetByIdCrossfade(song?.id);
-    } else {
-      const song = songs?.paul?.[paulSongIndex] ?? null;
-      nextSquares[index] = { player: "paul", song };
-      setPaulSongIndex((n) => n + 1);
-      playSongSnippetByIdCrossfade(song?.id);
-    }
-
-    setSquares(nextSquares);
-    setTurn(turn === "john" ? "paul" : "john");
-  }
-
-  // CPU turn effect (waits for audio, then "thinks", then plays)
   useEffect(() => {
     if (!humanPlayer || !cpuPlayer) return;
-    if (!turn) return;
-    if (winner) return;
-    if (turn !== cpuPlayer) return;
-    if (squares.every((s) => s !== null)) return;
+    if (!turn || winner || turn !== cpuPlayer) return;
+    if (isBoardFull) return;
 
-    let cancelled = false;
     const token = ++cpuTokenRef.current;
 
+    const waitMs = (ms) =>
+      new Promise((resolve) => {
+        const t = window.setTimeout(resolve, ms);
+        const check = () => {
+          if (cpuTokenRef.current !== token) {
+            window.clearTimeout(t);
+            resolve();
+            return;
+          }
+          requestAnimationFrame(check);
+        };
+        requestAnimationFrame(check);
+      });
+
+    const waitForAudioEnd = () =>
+      new Promise((resolve) => {
+        const el = currentElRef.current?.el;
+        if (!el || el.paused || el.ended) return resolve();
+
+        const done = () => resolve();
+        el.addEventListener("ended", done, { once: true });
+
+        const check = () => {
+          if (cpuTokenRef.current !== token) {
+            el.removeEventListener("ended", done);
+            resolve();
+            return;
+          }
+          requestAnimationFrame(check);
+        };
+        requestAnimationFrame(check);
+      });
+
     (async () => {
-      if (isAudioPlaying) {
-        await waitForAudioToFinish(token);
-      }
-      if (cancelled) return;
+      if (isPlaying) await waitForAudioEnd();
       if (cpuTokenRef.current !== token) return;
-      if (winner) return;
+      if (winner || turn !== cpuPlayer) return;
 
       const thinkMs =
-        CPU_THINK_MIN_MS +
-        Math.floor(Math.random() * (CPU_THINK_MAX_MS - CPU_THINK_MIN_MS + 1));
-
-      await waitMs(thinkMs, token);
-      if (cancelled) return;
+        CPU_THINK_MIN_MS + Math.floor(Math.random() * (CPU_THINK_MAX_MS - CPU_THINK_MIN_MS + 1));
+      await waitMs(thinkMs);
       if (cpuTokenRef.current !== token) return;
-      if (winner) return;
-      if (turn !== cpuPlayer) return;
+      if (winner || turn !== cpuPlayer) return;
 
       const move = chooseCpuMove(squares, cpuPlayer, humanPlayer);
-      if (move === null) return;
-      if (squares[move] !== null) return;
+      if (move === null || squares[move]) return;
 
-      // Execute CPU move (inline to avoid the "cpu turn" guard in handleSquareClick)
-      const nextSquares = [...squares];
-
-      if (cpuPlayer === "john") {
-        const song = songs?.john?.[johnSongIndex] ?? null;
-        nextSquares[move] = { player: "john", song };
-        setJohnSongIndex((n) => n + 1);
-        playSongSnippetByIdCrossfade(song?.id);
-      } else {
-        const song = songs?.paul?.[paulSongIndex] ?? null;
-        nextSquares[move] = { player: "paul", song };
-        setPaulSongIndex((n) => n + 1);
-        playSongSnippetByIdCrossfade(song?.id);
-      }
-
-      setSquares(nextSquares);
-      setTurn(cpuPlayer === "john" ? "paul" : "john");
+      placeMove(cpuPlayer, move, squares);
     })();
+  }, [humanPlayer, cpuPlayer, turn, winner, squares, isBoardFull, isPlaying, currentElRef, songIndex]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    humanPlayer,
-    cpuPlayer,
-    turn,
-    winner,
-    squares,
-    isAudioPlaying,
-    johnSongIndex,
-    paulSongIndex,
-    CPU_THINK_MIN_MS,
-    CPU_THINK_MAX_MS,
-  ]);
-
-  function handleReset() {
-    setSquares(Array(16).fill(null));
+  const handleReset = () => {
+    setSquares(Array(TOTAL).fill(null));
     setTurn(null);
     setStarter(null);
     setHumanPlayer(null);
-    setJohnSongIndex(0);
-    setPaulSongIndex(0);
+    setSongIndex({ john: 0, paul: 0 });
 
     cpuTokenRef.current++;
-
-    const cur = currentPlaybackRef.current;
-    if (cur?.el) stopPlayback(cur);
-    currentPlaybackRef.current = { el: null, source: null, gain: null };
-    setIsAudioPlaying(false);
+    stopAll();
 
     [johnRef.current, paulRef.current].forEach((el) => {
       if (!el) return;
       el.classList.remove("is-active");
       el.style.transition = "";
       el.style.transform = "";
-
       const shadow = el.querySelector(".side-shadow");
       if (shadow) {
         shadow.style.transition = "";
@@ -595,12 +432,14 @@ export default function Game() {
         shadow.style.opacity = "";
       }
     });
-  }
+  };
 
   return (
     <>
       <div className={`modal-overlay ${starter !== null ? "is-hidden" : ""}`} role="dialog" aria-modal="true">
         <div className="modal">
+          <h2 className="modal-title">Player Selection:</h2>
+
           <div className="modal-actions modal-actions--portraits">
             <button
               type="button"
@@ -626,21 +465,16 @@ export default function Game() {
       <section className="game-layout">
         <div
           ref={paulRef}
-          className={`side-image left ${
-            isPaulTurn ? "is-active" : ""
-          } ${winner === "paul" ? "is-winner" : ""} ${isTie ? "is-tie" : ""}`}
+          className={`side-image left ${isPaulTurn ? "is-active" : ""} ${winner === "paul" ? "is-winner" : ""} ${
+            isTie ? "is-tie" : ""
+          }`}
         >
           <span className="side-shadow" aria-hidden="true" />
           <img src="/images/hofner.png" alt="Paul McCartney Hofner Bass" />
         </div>
 
         <div className="board-area">
-          <Board
-            squares={squares}
-            onSquareClick={handleSquareClick}
-            winningLine={winningLine}
-            winner={winner}
-          />
+          <Board squares={squares} onSquareClick={handleSquareClick} winningLine={winningLine} winner={winner} />
 
           <button className="board-reset" type="button" onClick={handleReset}>
             Reset
@@ -649,9 +483,9 @@ export default function Game() {
 
         <div
           ref={johnRef}
-          className={`side-image right ${
-            isJohnTurn ? "is-active" : ""
-          } ${winner === "john" ? "is-winner" : ""} ${isTie ? "is-tie" : ""}`}
+          className={`side-image right ${isJohnTurn ? "is-active" : ""} ${winner === "john" ? "is-winner" : ""} ${
+            isTie ? "is-tie" : ""
+          }`}
         >
           <span className="side-shadow" aria-hidden="true" />
           <img src="/images/casino.png" alt="John Lennon Casino Guitar" />
