@@ -212,7 +212,7 @@ button {
   z-index: 10;
   opacity: 1;
   visibility: visible;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.783);
   transition: opacity 1000ms ease, visibility 1000ms ease;
 }
 
@@ -235,7 +235,6 @@ button {
   margin-left: 0px;
   line-height: 1;
   font-size: 24px;
-  font-style: italic;
   font-weight: 200;
 }
 
@@ -250,21 +249,22 @@ button {
 
 .modal-actions--portraits {
   justify-content: center;
-  gap: 25px;
+  gap: 50px;
 }
 
 .starter-button {
   cursor: pointer;
   border-width: 4px;
   border-style: solid;
-  border-color: #f4f1ea;
-  border-radius: 14px;
+  border-color: #686868;
+  border-radius: 12px;
   transition: box-shadow 200ms ease;
 }
 
 .starter-button img {
   display: block;
-  height: 150px;
+  height: 250px;
+  width: 250px;
   border-radius: 12px;
   object-fit: cover;
   filter: grayscale(100%);
